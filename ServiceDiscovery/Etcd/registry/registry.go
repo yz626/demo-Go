@@ -14,8 +14,8 @@ type Registry interface {
 }
 
 type EtcdAgent struct {
-	client *clientv3.Client
-	*notify.Notify
+	client         *clientv3.Client // etcd客户端
+	*notify.Notify                  // 监听服务关闭，通知服务器端
 }
 
 func NewAgent(etcdAddr []string, ttl int, stop chan struct{}) (Registry, error) {
@@ -60,7 +60,10 @@ func (e *EtcdAgent) Register(serviceName string, IP, port string) (func(), error
 				// 租约失效之后，etcd会自动删除无效的key，因此这里不需要手动删除key
 				if !ok {
 					e.Notify.Stop()
+					return
 				}
+			default:
+				time.Sleep(time.Second * 3)
 			}
 		}
 	}()
